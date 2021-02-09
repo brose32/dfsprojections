@@ -7,11 +7,13 @@ To create an optimized lineup run Run.py Note: at this time must change filename
 Potential bug:  I've noticed that sometimes pandas will not read the Excel values correctly for formula fields as it is specified if you have the Excel file open however, if you save and close the Excel file it fixes and will give you a lineup.
 
 ***Required Packages***
+
 BeautifulSoup
 pip install bs4
 
 Selenium
 pip install selenium
+*must also install Chrome Webdriver from https://chromedriver.chromium.org/downloads and change the Path to where you place it
 
 PuLP
 pip install pulp
