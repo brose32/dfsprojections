@@ -4,7 +4,7 @@ To get nba Fanduel projections run RunNBAScrapes.py in the terminal with the fir
 
 To create an optimized lineup run Run.py Note: at this time must change filename manually in NBASetup.py first for Excel file.  CSV file will be created at the filename specified.  
 
-Potential bug:  I've noticed that sometimes pandas will not read the Excel values correctly for formula fields as it is specified if you have the Excel file open however, if you save and close the Excel file it fixes and will give you a lineup.
+Potential bug:  I've noticed that sometimes pandas will not read the Excel values correctly for formula fields as it is specified in the functions parameters if you have the Excel file open, however, if you save and close the Excel file it fixes and will give you a lineup.
 
 ***Required Packages***
 
