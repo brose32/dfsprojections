@@ -1,3 +1,5 @@
+import csv
+
 from NFLOpt import NFLOpt
 from NBAOpt import NBAOpt
 
@@ -14,7 +16,21 @@ if sport == '1':
 if sport == '2':
     optimizer = NBAOpt()
     optimizer.create_indicators()
-    lineup = optimizer.lineupgen()
-    print(optimizer.printlineup(lineup))
+    #lineup = optimizer.lineupgen()
+    #print(optimizer.printlineup(lineup))
+    lineups = []
+    clean_lineups = []
+    for i in range(150):
+        #print(i)
+        lineup = optimizer.lineupgen(lineups)
+        lineups.append(lineup)
+        #print(optimizer.printlineup(lineup))
+        clean_lineups.append(optimizer.printlineup(lineup))
+    with open('final.csv', 'w', newline='') as f:
+        c = csv.writer(f)
+        for r in clean_lineups:
+            c.writerow([player for player in r])
 
+
+print('lineup generation complete')
 

@@ -11,7 +11,7 @@ csv_fdf = csv.reader(fdf)
 info = []
 for row in csv_fdf:
 
-    info.append({'playerName' : row[3], 'SAL': row[7], 'POS': row[1], 'TEAM': row[9], 'OPP': row[10], 'MINs': 0})
+    info.append({'ID': row[0], 'playerName' : row[3], 'SAL': row[7], 'POS': row[1], 'TEAM': row[9], 'OPP': row[10], 'MINs': 0})
 #print(info[4]['playerName'])
 
 my_file = "C:\\Users\\brose32\\Documents\\" + sys.argv[1]
@@ -19,7 +19,7 @@ wb = openpyxl.load_workbook(my_file)
 proj_sheet = wb.create_sheet("PROJECTIONS")
 #proj_sheet.append(('test', 'dee'))
 proj_sheet.append(('NAME', 'SAL', 'POS', 'TEAM', 'OPP', 'DVOA', 'TPPG', 'ImpTOTAL', 'DIFF', 'tPACE', 'oPACE', 'calcPACE',
-                   'FDpts/min','MINs', 'PROJ', 'VAL'))
+                   'FDpts/min','MINs', 'PROJ', 'VAL', 'GOAL', 'ID'))
 #for i in range(1, len(info)):
 #    proj_sheet.append((info[i]['playerName'], float(info[i]['SAL']), info[i]['POS'], info[i]['TEAM']))
 
@@ -91,7 +91,7 @@ for player in info:
 #adding to sheet
 
 for i in range(1, len(info)):
-    print(info[i]['playerName'])
+    #print(info[i]['playerName'])
     diff_formula = '=(((H' + str(i + 1) + '-G' + str(i + 1) + ')/100) + 1)'
     # (fd_pts_min * minutes_projected * gameflow rating) * (game total rating * DVOA)
 
@@ -99,10 +99,11 @@ for i in range(1, len(info)):
     value_formula = '=(O' + str(i+1) + '/(B' + str(i+1) +'/1000))'
     # ((team pace - avg pace) + (opp pace - avg pace) + avg pace) / team pace
     pace_formula = '=(((J' + str(i+1) + '-PACE!B32)+(K' + str(i+1) + '-PACE!B32)+PACE!B32)/J' + str(i+1) + ')'
+    goal = (float(info[i]['SAL']) * 3.5) + 22
     proj_sheet.append((info[i]['playerName'], float(info[i]['SAL']), info[i]['POS'], info[i]['TEAM'], info[i]['OPP'],
                        info[i]['DVOA'], info[i]['TPPG'], info[i]['ImpTOTAL'], diff_formula, info[i]['tPACE'],
                        info[i]['oPACE'], pace_formula, info[i]['FDptsmin'], info[i]['MINs'],
-                       proj_formula, value_formula))
+                       proj_formula, value_formula, goal, info[i]['ID']))
 #NEED TO CHANGE TO HOME AND AWAY??? currently season avg
 
 
