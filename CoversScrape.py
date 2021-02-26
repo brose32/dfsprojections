@@ -1,3 +1,4 @@
+import json
 import re
 
 from bs4 import BeautifulSoup as soup
@@ -15,38 +16,17 @@ page_soup = soup(page_html, "html.parser")
 away_teams = page_soup.findAll("div", {"class": "cmg_matchup_list_column_1"})
 home_teams = page_soup.findAll("div", {"class": "cmg_matchup_list_column_3"})
 lines_table = page_soup.findAll("div", {"class": "cmg_team_live_odds"})
+with open('teamAbbrs.json') as f:
+    team_abbrs = json.load(f)
 away_teams_list = []
 home_teams_list = []
 lines = []
+#cleaning team abbreviations and adding to list
 for team in away_teams:
-    away_teams_list.append(team.div.text.strip()[:3].rstrip())
-    if away_teams_list[-1] == 'GS':
-        away_teams_list[-1] = 'GSW'
-    elif away_teams_list[-1] == 'BK':
-        away_teams_list[-1] = 'BKN'
-    elif away_teams_list[-1] == 'NO':
-        away_teams_list[-1] = 'NOR'
-    elif away_teams_list[-1] == 'SA':
-        away_teams_list[-1] = 'SAS'
-    elif away_teams_list[-1] == 'NY':
-        away_teams_list[-1] = 'NYK'
+    away_teams_list.append(team_abbrs[team.div.text.strip()[:3].rstrip()])
 for team in home_teams:
-    if (len(team.div.text.strip()) == 3) :
-        home_teams_list.append(team.div.text.strip())
-    else:
-        home_teams_list.append(team.div.text.strip()[3:].lstrip())
-    if home_teams_list[-1] == 'GS':
-        home_teams_list[-1] = 'GSW'
-    elif home_teams_list[-1] == 'BK':
-        home_teams_list[-1] = 'BKN'
-    elif home_teams_list[-1] == 'NO':
-        home_teams_list[-1] = 'NOR'
-    elif home_teams_list[-1] == 'SA':
-        home_teams_list[-1] = 'SAS'
-    elif home_teams_list[-1] == 'NY':
-        home_teams_list[-1] = 'NYK'
-#lines.append({'total' : 0, 'homespread': 0})
-#lines.append({'total' : 0, 'homespread': 0})
+    home_teams_list.append(team_abbrs[team.div.text.strip()[3:].lstrip()])
+
 for game in lines_table:
     temp = re.findall(r'-?\d*\.?\d+', game.text)
     if len(temp) == 1 :
@@ -65,6 +45,7 @@ lines_sheet.append(("HOME TEAM LINE", "O/U", "HOME TEAM", "HOME TOTAL", "AWAY TE
 
 for i in range(0, len(lines)):
     home_total = (lines[i]['total']/2) - (lines[i]['homespread'] / 2)
-    lines_sheet.append((lines[i]['homespread'], lines[i]['total'], home_teams_list[i], home_total, away_teams_list[i], (lines[i]['total'] - home_total)))
+    lines_sheet.append((lines[i]['homespread'], lines[i]['total'], home_teams_list[i], home_total, away_teams_list[i],
+                        (lines[i]['total'] - home_total)))
 
 wb.save(my_file)

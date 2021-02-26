@@ -1,5 +1,5 @@
+import json
 import sys
-
 import openpyxl
 import csv
 #getting positions for players / opponent from fanduel download
@@ -7,7 +7,7 @@ import csv
 fpath = "C:\\Users\\brose32\\Downloads\\" + sys.argv[2]
 fdf = open(fpath)
 csv_fdf = csv.reader(fdf)
-
+next(csv_fdf)
 info = []
 for row in csv_fdf:
 
@@ -17,7 +17,6 @@ for row in csv_fdf:
 my_file = "C:\\Users\\brose32\\Documents\\" + sys.argv[1]
 wb = openpyxl.load_workbook(my_file)
 proj_sheet = wb.create_sheet("PROJECTIONS")
-#proj_sheet.append(('test', 'dee'))
 proj_sheet.append(('NAME', 'SAL', 'POS', 'TEAM', 'OPP', 'DVOA', 'TPPG', 'ImpTOTAL', 'DIFF', 'tPACE', 'oPACE', 'calcPACE',
                    'FDpts/min','MINs', 'PROJ', 'VAL', 'GOAL', 'ID'))
 #for i in range(1, len(info)):
@@ -32,29 +31,14 @@ fdpts = wb['FD PTS_MIN']
 lines = wb['VEGAS_LINES']
 mins = wb['MINUTES_PROJ']
 pace = wb['PACE']
+with open('teamAbbrs.json') as f:
+    team_abbrs = json.load(f)
 #looping to add all data to main sheet
 for player in info:
     player['FDptsmin'] = 0
-    if player['TEAM'] == 'SA':
-        player['TEAM'] = 'SAS'
-    if player['OPP'] == 'SA':
-        player['OPP'] = 'SAS'
-    if player['TEAM'] == 'NY':
-        player['TEAM'] = 'NYK'
-    if player['OPP'] == 'NY':
-        player['OPP'] = 'NYK'
-    if player['TEAM'] == 'GS':
-        player['TEAM'] = 'GSW'
-    if player['OPP'] == 'GS':
-        player['OPP'] = 'GSW'
-    if player['TEAM'] == 'NO':
-        player['TEAM'] = 'NOR'
-    if player['OPP'] == 'NO':
-        player['OPP'] = 'NOR'
-    if player['TEAM'] == 'PHX':
-        player['TEAM'] = 'PHO'
-    if player['OPP'] == 'PHX':
-        player['OPP'] = 'PHO'
+    #clean up team abbreviations
+    player['TEAM'] = team_abbrs[player['TEAM']]
+    player['OPP'] = team_abbrs[player['OPP']]
     opponent = player['OPP']
     position = player['POS']
 
@@ -89,23 +73,21 @@ for player in info:
 #print(info)
 
 #adding to sheet
-
-for i in range(1, len(info)):
+for i in range(0, len(info)):
     #print(info[i]['playerName'])
-    diff_formula = '=(((H' + str(i + 1) + '-G' + str(i + 1) + ')/100) + 1)'
+    diff_formula = '=(((H' + str(i + 2) + '-G' + str(i + 2) + ')/100) + 1)'
     # (fd_pts_min * minutes_projected * gameflow rating) * (game total rating * DVOA)
 
-    proj_formula = '=((M' + str(i+1) + '*N' + str(i+1)+ '*L' + str(i+1) +')*(F'+ str(i+1) + '*I' + str(i+1) + '))'
-    value_formula = '=(O' + str(i+1) + '/(B' + str(i+1) +'/1000))'
+    proj_formula = '=((M' + str(i+2) + '*N' + str(i+2)+ '*L' + str(i+2) +')*(F'+ str(i+2) + '*I' + str(i+2) + '))'
+    value_formula = '=(O' + str(i+2) + '/(B' + str(i+2) +'/1000))'
     # ((team pace - avg pace) + (opp pace - avg pace) + avg pace) / team pace
-    pace_formula = '=(((J' + str(i+1) + '-PACE!B32)+(K' + str(i+1) + '-PACE!B32)+PACE!B32)/J' + str(i+1) + ')'
-    goal = (float(info[i]['SAL']) * 3.5) + 22
+    pace_formula = '=(((J' + str(i+2) + '-PACE!B32)+(K' + str(i+2) + '-PACE!B32)+PACE!B32)/J' + str(i+2) + ')'
+    goal = ((float(info[i]['SAL']) / 1000) * 3.5) + 22
     proj_sheet.append((info[i]['playerName'], float(info[i]['SAL']), info[i]['POS'], info[i]['TEAM'], info[i]['OPP'],
                        info[i]['DVOA'], info[i]['TPPG'], info[i]['ImpTOTAL'], diff_formula, info[i]['tPACE'],
                        info[i]['oPACE'], pace_formula, info[i]['FDptsmin'], info[i]['MINs'],
                        proj_formula, value_formula, goal, info[i]['ID']))
 #NEED TO CHANGE TO HOME AND AWAY??? currently season avg
-
 
 wb.save(my_file)
 
