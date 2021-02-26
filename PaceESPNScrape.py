@@ -1,3 +1,4 @@
+import json
 import sys
 
 from bs4 import BeautifulSoup as soup
@@ -16,28 +17,12 @@ table = page_soup.find('table', {'class': 'tablehead'})
 #print(table)
 rows = table.findAll('tr')
 team_pace_list = []
-
-def nameToAbbr(name):
-    if name == 'New York':
-        return 'NYK'
-    if name == 'New Orleans':
-        return 'NOR'
-    abbr_new = name.replace(" ", "")[:3].upper()
-    #print(abbr_new)
-    #checking special cases
-    if abbr_new == 'BRO':
-        abbr_new = 'BKN'
-    if abbr_new == 'GOL':
-        abbr_new = 'GSW'
-    if abbr_new == 'SAN':
-        abbr_new = 'SAS'
-    if abbr_new == 'OKL':
-        abbr_new = 'OKC'
-    return abbr_new
+with open('CityToAbbr.json') as f:
+    city_to_abbr = json.load(f)
 
 for i in range(2, len(rows)):
     team_name = rows[i].find("a").text
-    abbr_name = nameToAbbr(team_name)
+    abbr_name = city_to_abbr[team_name]
     pace = rows[i].find("td", {'class': 'sortcell'})
     team_pace_list.append({'PACE': float(pace.text), 'TEAM': abbr_name})
 
