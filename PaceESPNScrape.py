@@ -1,9 +1,7 @@
 import json
 import sys
-
 from bs4 import BeautifulSoup as soup
 from urllib.request import urlopen
-
 import openpyxl
 
 my_url = "http://www.espn.com/nba/hollinger/teamstats/_/sort/paceFactor"
@@ -19,7 +17,7 @@ rows = table.findAll('tr')
 team_pace_list = []
 with open('CityToAbbr.json') as f:
     city_to_abbr = json.load(f)
-
+#cleaning abbreviations
 for i in range(2, len(rows)):
     team_name = rows[i].find("a").text
     abbr_name = city_to_abbr[team_name]

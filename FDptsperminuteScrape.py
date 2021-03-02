@@ -1,3 +1,4 @@
+import json
 import sys
 
 from bs4 import BeautifulSoup as soup
@@ -26,13 +27,15 @@ table_body = table.tbody
 rows = table_body.findAll("tr")
 
 name_list = []
+with open('playerNames.json') as f:
+    player_names = json.load(f)
 for row in rows:
     playerFDpts_min = row.findAll("td", {"class": "bg-blue-lighter"})
     #FD points per minute on 50/50 ratio between last5 games and season average
     #could add ratio with last 10 games
     last5_seasonAvg = (float(playerFDpts_min[0].text.lstrip().rstrip()) * .5) + (float(playerFDpts_min[-1].text.lstrip().rstrip()) * .5)
-    name_list.append({'name': row.td.text.replace("Jr.", "").replace("Sr.", "").replace("III", "").replace("II", "").replace("IV", "")
-                     .lstrip().rstrip(), 'avg': last5_seasonAvg})
+
+    name_list.append({'name': player_names[row.td.text.lstrip().rstrip()], 'avg': last5_seasonAvg})
 #print(name_list)
 
 #setting excel sheet
@@ -42,7 +45,7 @@ fd_pts_min_sheet = wb.create_sheet("FD PTS_MIN")
 fd_pts_min_sheet.append(("NAME", "FD PTS/MIN"))
 for player in name_list:
     fd_pts_min_sheet.append((player['name'], player['avg']))
-#need to add player position data from another source!!!!!!
+
 wb.save(my_file)
 print("FD pts per min scrape complete")
 

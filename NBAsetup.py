@@ -11,16 +11,15 @@ class NBAsetup:
     def __init__(self):
         #change document file location here
         #pd.read_excel('C:\\Users\\brose32\\Documents\\nbaproj01302021.xlsx', sheet_name='PROJECTIONS'
-        #              , usecols='A:E,O'
-        #              ).to_csv('C:\\Users\\brose32\\Documents\\nbaproj01302021.csv', index=False)
+        #             , skiprows=1).to_csv('C:\\Users\\brose32\\Documents\\nbaproj01302021.csv', index=False)
     # cannot have excel projections open and be able to read it into CSV makes no sense but whatever
-        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbaproj02082021.xlsx', data_only=True)
+        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbaproj03012021.xlsx', data_only=True)
         sh = wb['PROJECTIONS']
-        with open('C:\\Users\\brose32\\Documents\\nbaFD02082021.csv', 'w', newline="") as f:  # open('test.csv', 'w', newline="") for python 3
+        with open('C:\\Users\\brose32\\Documents\\nbaFD03012021.csv', 'w', newline="") as f:
             c = csv.writer(f)
             for r in sh.rows:
                 c.writerow([cell.value for cell in r])
-        self.players_df = self.loadinput('C:\\Users\\brose32\\Documents\\nbaFD02082021.csv')
+        self.players_df = self.loadinput('C:\\Users\\brose32\\Documents\\nbaFD03012021.csv')
         self.num_players = len(self.players_df.index)
         self.player_teams = []
         self.opp_teams = []
@@ -53,4 +52,5 @@ class NBAsetup:
         #oops
         for player_opps in self.players_df.loc[:, 'OPP']:
             self.opp_teams.append(1 if player_opps == oppo else 0 for oppo in opps)
+
 

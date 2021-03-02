@@ -1,3 +1,4 @@
+import json
 import sys
 
 from bs4 import BeautifulSoup as soup
@@ -20,9 +21,11 @@ center_stats = table_body.findAll("tr", {"class": "GC-0 C"})
 
 avgfpg = center_stats[0].findAll("b")
 centerRows = []
+with open('teamAbbrs.json') as f:
+    team_abbrs = json.load(f)
 for team in center_stats:
     stats = team.findAll("b")
-    stuff = [team.td.span.text.replace("UTH","UTA"), "C", stats[-1].text]
+    stuff = [team_abbrs[team.td.span.text], "C", stats[-1].text]
     centerRows.append(stuff)
 
 ##adding new sheet to excel workbook at end of workbook
@@ -31,10 +34,7 @@ for team in center_stats:
 my_file = "C:\\Users\\brose32\\Documents\\" + sys.argv[1]
 wb = openpyxl.load_workbook(my_file)
 dvoa_sheet = wb.create_sheet("TEAMOVP")
-dvoa_sheet['A1'] = 'TEAM'
-dvoa_sheet['B1'] = 'POS'
-dvoa_sheet['C1'] = 'PTS'
-dvoa_sheet['D1'] = 'tOVP'
+dvoa_sheet.append(('TEAM', 'POS', 'PTS', 'tOVP'))
 sum = 0
 for i in range(0, 30):
     dvoa_sheet['A' + str(i + 2)] = centerRows[i][0]
@@ -51,7 +51,7 @@ for x in range(2, 32):
 pointGuardRows = []
 for team in point_guard_stats:
     data = team.findAll("b")
-    pointGuardRows.append([team.td.span.text.replace("UTH", "UTA"), "PG", data[-1].text])
+    pointGuardRows.append([team_abbrs[team.td.span.text], "PG", data[-1].text])
 pgSum = 0
 for i in range(30, 60):
     dvoa_sheet['A' + str(i + 2)] = pointGuardRows[i-30][0]
@@ -67,7 +67,7 @@ for x in range(32,62):
 shootingGuardRows = []
 for team in shooting_guard_stats:
     data = team.findAll("b")
-    shootingGuardRows.append([team.td.span.text.replace("UTH", "UTA"), "SG", data[-1].text])
+    shootingGuardRows.append([team_abbrs[team.td.span.text], "SG", data[-1].text])
 sgSum = 0
 for i in range(60,90):
     dvoa_sheet['A' + str(i + 2)] = shootingGuardRows[i-60][0]
@@ -82,7 +82,7 @@ for x in range(62,92):
 smallForwardRows = []
 for team in small_forward_stats:
     data = team.findAll("b")
-    smallForwardRows.append([team.td.span.text.replace("UTH","UTA"), "SF", data[-1].text])
+    smallForwardRows.append([team_abbrs[team.td.span.text], "SF", data[-1].text])
 sfSum = 0
 for i in range(90,120):
     dvoa_sheet['A' + str(i + 2)] = smallForwardRows[i-90][0]
@@ -97,7 +97,7 @@ for x in range(92,122):
 powerForwardRows = []
 for team in power_forward_stats:
     data = team.findAll("b")
-    powerForwardRows.append([team.td.span.text.replace("UTH","UTA"), "PF", data[-1].text])
+    powerForwardRows.append([team_abbrs[team.td.span.text], "PF", data[-1].text])
 pfSum = 0
 for i in range(120,150):
     dvoa_sheet['A' + str(i+2)] = powerForwardRows[i-120][0]

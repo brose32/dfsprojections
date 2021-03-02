@@ -1,4 +1,5 @@
 import csv
+import time
 
 from NFLOpt import NFLOpt
 from NBAOpt import NBAOpt
@@ -14,6 +15,7 @@ if sport == '1':
     print_lineup = optimizer.printlineup(lineup)
     print(print_lineup)
 if sport == '2':
+    starttime = time.time()
     optimizer = NBAOpt()
     optimizer.create_indicators()
     #lineup = optimizer.lineupgen()
@@ -26,11 +28,11 @@ if sport == '2':
         lineups.append(lineup)
         #print(optimizer.printlineup(lineup))
         clean_lineups.append(optimizer.printlineup(lineup))
-    with open('final.csv', 'w', newline='') as f:
+    with open('lineups.csv', 'w', newline='') as f:
         c = csv.writer(f)
         for r in clean_lineups:
             c.writerow([player for player in r])
+    optimizer.getLineupsData(clean_lineups)
 
-
-print('lineup generation complete')
+print('lineups generated in ', time.time()-starttime, "seconds")
 

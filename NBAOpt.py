@@ -37,7 +37,7 @@ class NBAOpt(NBAsetup):
 
         #objective
         prob += (pulp.lpSum(self.players_df.loc[i, 'PROJ']*player_lineup[i] for i in range(self.num_players)))
-        prob.solve(CPLEX_PY())
+        prob.solve(CPLEX_PY(msg=0))
 
         lineup_copy = []
         for i in range(self.num_players):
