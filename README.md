@@ -21,4 +21,7 @@ pip install pulp
 openpyxl
 pip install openpyxl
 
+CPLEX
+pip install docplex
+
 etc urllib, requests, pandas, and anything else that is imported that you do not have
