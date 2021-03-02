@@ -1,3 +1,5 @@
+import re
+
 from pulp import *
 from NBAsetup import NBAsetup
 
@@ -24,7 +26,7 @@ class NBAOpt(NBAsetup):
         used_team = [pulp.LpVariable("u{}".format(i + 1), cat="Binary") for i in range(self.num_teams)]
         #for i in range(self.num_teams):
         #    prob += used_team[i] <= pulp.lpSum(self.player_teams[k][i] * player_lineup[k] for k in range(self.num_players))
-        #    prob += (pulp.lpSum(self.player_teams[k][i] * player_lineup[k] for k in range(self.num_players)) <= 4*used_team[i])
+            #prob += (pulp.lpSum(self.player_teams[k][i] * player_lineup[k] for k in range(self.num_players)) <= 4*used_team[i])
         prob += (pulp.lpSum(used_team[i] for i in range(self.num_teams)) >= 3)
         #salary constraint
         prob += (pulp.lpSum(self.players_df.loc[i, 'SAL']*player_lineup[i] for i in range(self.num_players)) <= self.SALARYCAP)
@@ -35,8 +37,7 @@ class NBAOpt(NBAsetup):
 
         #objective
         prob += (pulp.lpSum(self.players_df.loc[i, 'PROJ']*player_lineup[i] for i in range(self.num_players)))
-        #prob.solve(pulp.CPLEX_PY(msg=0))
-        prob.solve()
+        prob.solve(CPLEX_PY())
 
         lineup_copy = []
         for i in range(self.num_players):
@@ -85,3 +86,21 @@ class NBAOpt(NBAsetup):
                 a_lineup[9] = total_proj
                 a_lineup[10] = total_sal
         return a_lineup
+
+
+    def getLineupsData(self, lineups):
+        players = {}
+        for lineup in lineups:
+            for i in range(len(lineup)-2):
+                if not players.__contains__(lineup[i]) and not lineup[i].isnumeric():
+                    players[lineup[i]] = 1
+                else:
+                    players[lineup[i]] += 1
+        for player in players:
+            num = player.index(':')
+            per = str((players[player]/len(lineups)* 100)) + '%'
+            print(player[num+1:], players[player], per)
+        print('Total players used: ', len(players))
+
+
+
