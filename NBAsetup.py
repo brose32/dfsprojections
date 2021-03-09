@@ -1,4 +1,5 @@
 import csv
+import random
 
 import openpyxl
 import pandas as pd
@@ -13,19 +14,20 @@ class NBAsetup:
         #pd.read_excel('C:\\Users\\brose32\\Documents\\nbaproj01302021.xlsx', sheet_name='PROJECTIONS'
         #             , skiprows=1).to_csv('C:\\Users\\brose32\\Documents\\nbaproj01302021.csv', index=False)
     # cannot have excel projections open and be able to read it into CSV makes no sense but whatever
-        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbaproj03012021.xlsx', data_only=True)
+        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbaproj03042021.xlsx', data_only=True)
         sh = wb['PROJECTIONS']
-        with open('C:\\Users\\brose32\\Documents\\nbaFD03012021.csv', 'w', newline="") as f:
+        with open('C:\\Users\\brose32\\Documents\\nbaFD03042021.csv', 'w', newline="") as f:
             c = csv.writer(f)
             for r in sh.rows:
                 c.writerow([cell.value for cell in r])
-        self.players_df = self.loadinput('C:\\Users\\brose32\\Documents\\nbaFD03012021.csv')
+        self.players_df = self.loadinput('C:\\Users\\brose32\\Documents\\nbaFD03042021.csv')
         self.num_players = len(self.players_df.index)
         self.player_teams = []
         self.opp_teams = []
         self.num_teams = None
         self.num_opponents = None
         self.positions = {'PG':[], 'SG':[], 'SF':[], 'PF':[], 'C':[]}
+        self.randomness = 5
 
     def loadinput(self, filename):
         try:
@@ -53,4 +55,9 @@ class NBAsetup:
         for player_opps in self.players_df.loc[:, 'OPP']:
             self.opp_teams.append(1 if player_opps == oppo else 0 for oppo in opps)
 
-
+    def addRandomness(self):
+        for i in range(len(self.players_df)):
+            rand = random.randint(100 - self.randomness, 100 + self.randomness)
+            og = self.players_df.loc[i,'PROJ']
+            randproj = og * (rand/100)
+            self.players_df.at[i, 'PROJ'] = randproj

@@ -16,14 +16,13 @@ if sport == '1':
     print(print_lineup)
 if sport == '2':
     starttime = time.time()
-    optimizer = NBAOpt()
-    optimizer.create_indicators()
-    #lineup = optimizer.lineupgen()
-    #print(optimizer.printlineup(lineup))
     lineups = []
     clean_lineups = []
     for i in range(150):
         #print(i)
+        optimizer = NBAOpt()
+        optimizer.create_indicators()
+        optimizer.addRandomness()
         lineup = optimizer.lineupgen(lineups)
         lineups.append(lineup)
         #print(optimizer.printlineup(lineup))
