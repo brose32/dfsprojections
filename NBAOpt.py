@@ -8,6 +8,7 @@ class NBAOpt(NBAsetup):
     def __init__(self):
         self.SALARYCAP = 60000
         self.overlap = 6
+        self.max_per_team = 4
         super().__init__()
 
 
@@ -24,12 +25,31 @@ class NBAOpt(NBAsetup):
 
         #team constraint
         used_team = [pulp.LpVariable("u{}".format(i + 1), cat="Binary") for i in range(self.num_teams)]
-        #for i in range(self.num_teams):
-        #    prob += used_team[i] <= pulp.lpSum(self.player_teams[k][i] * player_lineup[k] for k in range(self.num_players))
-            #prob += (pulp.lpSum(self.player_teams[k][i] * player_lineup[k] for k in range(self.num_players)) <= 4*used_team[i])
         prob += (pulp.lpSum(used_team[i] for i in range(self.num_teams)) >= 3)
+
+        # max player per team
+        for team in self.player_teams:
+            prob += (pulp.lpSum(self.player_teams[team][i]*player_lineup[i] for i in range(self.num_players)) <= self.max_per_team)
+
+        #player grouping rules samples are commented out
+        #how to lock in a player
+        #prob += ((pulp.lpSum(self.player_names["Stanley Johnson"][i]*player_lineup[i] for i in range(self.num_players))) == 1)
+
+        #if player A no player B... player N and vice versa
+        #prob += ((pulp.lpSum(self.player_names["Jimmy Butler"][i]*player_lineup[i] +
+        #                     self.player_names["Brandon Ingram"][i] * player_lineup[i]  for i in range(self.num_players))
+        #          <= 1))
+
+        #max exposure checker
+        #all players under a certain %
+        # doesnt work yet
+        #for i in range(len(lineups)):
+         #   prob += (pulp.lpSum(lineups[i][k] + player_lineup[k] for k in range(self.num_players)) <= 100)
+
+
         #salary constraint
         prob += (pulp.lpSum(self.players_df.loc[i, 'SAL']*player_lineup[i] for i in range(self.num_players)) <= self.SALARYCAP)
+        prob += (pulp.lpSum(self.players_df.loc[i, 'SAL']*player_lineup[i] for i in range(self.num_players)) >= 59400)
 
         #max num players from another lineup = 6
         for i in range(len(lineups)):
@@ -38,8 +58,8 @@ class NBAOpt(NBAsetup):
         #objective
         prob += (pulp.lpSum(self.players_df.loc[i, 'PROJ']*player_lineup[i] for i in range(self.num_players)))
         prob.solve(CPLEX_PY(msg=0))
-
         lineup_copy = []
+
         for i in range(self.num_players):
             if player_lineup[i].varValue >= 0.9 and player_lineup[i].varValue <= 1.1:
                 #print(player_lineup[i])
