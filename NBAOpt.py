@@ -9,6 +9,7 @@ class NBAOpt(NBAsetup):
         self.SALARYCAP = 60000
         self.overlap = 6
         self.max_per_team = 4
+        self.total_lineups = 150
         super().__init__()
 
 
@@ -39,17 +40,23 @@ class NBAOpt(NBAsetup):
         #prob += ((pulp.lpSum(self.player_names["Jimmy Butler"][i]*player_lineup[i] +
         #                     self.player_names["Brandon Ingram"][i] * player_lineup[i]  for i in range(self.num_players))
         #          <= 1))
+        prob += ((pulp.lpSum(self.player_names["Immanuel Quickley"][i]*player_lineup[i] +
+                             self.player_names["Alec Burks"][i] * player_lineup[i]  for i in range(self.num_players))
+                  <= 1))
+        prob += ((pulp.lpSum(self.player_names["Moses Brown"][i] * player_lineup[i] +
+                             self.player_names["Aleksej Pokusevski"][i] * player_lineup[i] for i in range(self.num_players))
+                  <= 1))
 
-        #max exposure checker
-        #all players under a certain %
-        # doesnt work yet
-        #for i in range(len(lineups)):
-         #   prob += (pulp.lpSum(lineups[i][k] + player_lineup[k] for k in range(self.num_players)) <= 100)
-
+        #max exposure for a specified player
+        # set the percentage as decimal
+        prob += ((pulp.lpSum((self.player_names['Trae Young'][k]*lineups[i][k])
+                            for i in range(len(lineups)) for k in range(self.num_players)))
+                            + (pulp.lpSum((self.player_names['Trae Young'][k]*
+                                player_lineup[k] for k in range(self.num_players)))) <= (.3 * self.total_lineups))
 
         #salary constraint
         prob += (pulp.lpSum(self.players_df.loc[i, 'SAL']*player_lineup[i] for i in range(self.num_players)) <= self.SALARYCAP)
-        prob += (pulp.lpSum(self.players_df.loc[i, 'SAL']*player_lineup[i] for i in range(self.num_players)) >= 59400)
+        prob += (pulp.lpSum(self.players_df.loc[i, 'SAL']*player_lineup[i] for i in range(self.num_players)) >= 59500)
 
         #max num players from another lineup = 6
         for i in range(len(lineups)):
