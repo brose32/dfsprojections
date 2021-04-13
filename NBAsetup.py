@@ -1,4 +1,6 @@
 import csv
+import datetime
+import json
 import random
 
 import openpyxl
@@ -14,13 +16,13 @@ class NBAsetup:
         #pd.read_excel('C:\\Users\\brose32\\Documents\\nbaproj01302021.xlsx', sheet_name='PROJECTIONS'
         #             , skiprows=1).to_csv('C:\\Users\\brose32\\Documents\\nbaproj01302021.csv', index=False)
     # cannot have excel projections open and be able to read it into CSV makes no sense but whatever
-        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbaproj03112021.xlsx', data_only=True)
+        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbaproj04122021.xlsx', data_only=True)
         sh = wb['PROJECTIONS']
-        with open('C:\\Users\\brose32\\Documents\\nbaFD03112021.csv', 'w', newline="") as f:
+        with open('C:\\Users\\brose32\\Documents\\nbalineups.csv', 'w', newline="") as f:
             c = csv.writer(f)
             for r in sh.rows:
                 c.writerow([cell.value for cell in r])
-        self.players_df = self.loadinput('C:\\Users\\brose32\\Documents\\nbaFD03112021.csv')
+        self.players_df = self.loadinput('C:\\Users\\brose32\\Documents\\nbalineups.csv')
         self.num_players = len(self.players_df.index)
         self.player_teams = {}
         self.opp_teams = []
@@ -28,6 +30,7 @@ class NBAsetup:
         self.num_opponents = None
         self.positions = {'PG':[], 'SG':[], 'SF':[], 'PF':[], 'C':[]}
         self.player_names = {}
+        self.started = []
         self.randomness = 5
 
     def loadinput(self, filename):
@@ -72,9 +75,37 @@ class NBAsetup:
                 else:
                     self.player_names[player].append(0)
 
+    def addTimeIndicator(self):
+        current_time = datetime.datetime.now()
+        #print(current_time.hour)
+        for tip in self.players_df.loc[:,'TIME']:
+            print(tip)
+            if current_time.hour < tip + 12:
+                self.started.append(0)
+            else:
+                self.started.append(1)
+        print(self.started)
+
+    def getLockedPlayers(self, lineup):
+        current_time = datetime.datetime.now()
+        locked = []
+        for player in lineup:
+            player_row = self.players_df.loc[self.players_df['NAME'] == player]
+            tip_json = json.loads(player_row.to_json())
+            s = tip_json.get('TIME').values()
+            tip = int([x for x in s][0])
+            if tip + 12 < current_time.hour:
+                locked.append(player)
+        return locked
+
+
+
+
+
     def addRandomness(self):
         for i in range(len(self.players_df)):
             rand = random.randint(100 - self.randomness, 100 + self.randomness)
             og = self.players_df.loc[i,'PROJ']
             randproj = og * (rand/100)
             self.players_df.at[i, 'PROJ'] = randproj
+
