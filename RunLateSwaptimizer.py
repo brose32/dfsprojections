@@ -11,8 +11,7 @@ named_lineups = []
 with open('lineups.csv', 'r', newline='') as f:
     c = csv.reader(f)
     for row in c:
-        for col in range(8):
-            named_lineups.append(row)
+        named_lineups.append(row)
 #strip id away from player name
 for i in range(len(named_lineups)):
     named_lineups[i] = named_lineups[i][:9]
@@ -22,6 +21,7 @@ for i in range(len(named_lineups)):
 
 new_lineups_raw = []
 new_lineups_names = []
+print(named_lineups)
 for lineup in named_lineups:
     locks = optimizer.getLockedPlayers(lineup)
     new_lineup = optimizer.lateSwap(new_lineups_raw, locks)

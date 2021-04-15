@@ -2,6 +2,7 @@ import csv
 import datetime
 import json
 import random
+import re
 
 import openpyxl
 import pandas as pd
@@ -16,7 +17,7 @@ class NBAsetup:
         #pd.read_excel('C:\\Users\\brose32\\Documents\\nbaproj01302021.xlsx', sheet_name='PROJECTIONS'
         #             , skiprows=1).to_csv('C:\\Users\\brose32\\Documents\\nbaproj01302021.csv', index=False)
     # cannot have excel projections open and be able to read it into CSV makes no sense but whatever
-        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbaproj04122021.xlsx', data_only=True)
+        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbaproj04142021.xlsx', data_only=True)
         sh = wb['PROJECTIONS']
         with open('C:\\Users\\brose32\\Documents\\nbalineups.csv', 'w', newline="") as f:
             c = csv.writer(f)
@@ -77,14 +78,15 @@ class NBAsetup:
 
     def addTimeIndicator(self):
         current_time = datetime.datetime.now()
-        #print(current_time.hour)
         for tip in self.players_df.loc[:,'TIME']:
-            print(tip)
-            if current_time.hour < tip + 12:
+            #separating hr and minutes
+            tipoffhr = float(re.search(r'([^:]+)', tip).group(0))
+            tipoffmin = float(re.search(r'(?<=:).*', tip).group(0)[:2]) / 60
+            if current_time.hour + (current_time.minute / 60) < (tipoffhr + tipoffmin + 12):
                 self.started.append(0)
             else:
                 self.started.append(1)
-        print(self.started)
+    #    print(self.started)
 
     def getLockedPlayers(self, lineup):
         current_time = datetime.datetime.now()
@@ -93,8 +95,10 @@ class NBAsetup:
             player_row = self.players_df.loc[self.players_df['NAME'] == player]
             tip_json = json.loads(player_row.to_json())
             s = tip_json.get('TIME').values()
-            tip = int([x for x in s][0])
-            if tip + 12 < current_time.hour:
+            tip = [x for x in s][0]
+            tipoffhr = float(re.search(r'([^:]+)', tip).group(0))
+            tipoffmin = float(re.search(r'(?<=:).*', tip).group(0)[:2]) / 60
+            if tipoffhr + tipoffmin + 12 < current_time.hour + (current_time.minute / 60):
                 locked.append(player)
         return locked
 
