@@ -3,6 +3,7 @@ import sys
 from bs4 import BeautifulSoup as soup
 from urllib.request import urlopen
 import openpyxl
+import json
 
 my_url = "https://www.fangraphs.com/leaders.aspx?pos=all&stats=rel&lg=all&qual=0&type=0&season=2021&month=0&season1=2021&ind=0&team=0,ts&rost=0&age=0&filter=&players=0"
 
@@ -15,11 +16,12 @@ table_body = page_soup.find("table", {"id" : "LeaderBoard1_dg1_ctl00"}).tbody
 rows = table_body.findAll("tr")
 
 bullpenDict = {}
-
+with open('fangraphsCleanAbbrs.json') as f:
+    team_abbr = json.load(f)
 for row in rows:
     bullpen_data = row.findAll("td")
     #rank, team, w, l, era, g, gs, cg, sho, sv, hld, bs, ip, tbf, h, r, er, hr, bb, ibb, hbp, wp, bk, so
-    bullpenDict[bullpen_data[1].text] = {
+    bullpenDict[team_abbr[bullpen_data[1].text]] = {
         "ip" : float(bullpen_data[12].text),
         "h" : float(bullpen_data[14].text),
         "r" : float(bullpen_data[15].text),
