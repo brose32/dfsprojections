@@ -12,23 +12,38 @@ starttime = time.time()
 if sport == '1':
     optimizer = NFLOpt()
     optimizer.create_indicators()
-    lineup = optimizer.lineupgen()
-    print_lineup = optimizer.printlineup(lineup)
-    print(print_lineup)
+    lineups = []
+    clean_lineups = []
+    for i in range(150):
+        optimizer.addRandomness()
+        lineup = optimizer.lineupgen(lineups)
+        lineups.append(lineup)
+        clean_lineups.append(optimizer.printlineup(lineup))
+    with open('nfllineups.csv', 'w', newline='') as f:
+        c = csv.writer(f)
+        for r in clean_lineups:
+            c.writerow([player for player in r])
+    optimizer.getLineupsData(clean_lineups)
 if sport == '2':
     optimizer = NBAOpt()
     optimizer.create_indicators()
     lineups = []
     clean_lineups = []
-    for i in range(150):
+    scores = []
+    lineup = optimizer.lineupgen(lineups, [])
+    lineups.append(lineup)
+    clean_lineups.append(optimizer.printlineup(lineup))
+    for i in range(1, 10):
         #uncomment below if using randomness, commented out for speed enhancement
         #optimizer = NBAOpt()
         #optimizer.create_indicators()
         #optimizer.addRandomness()
-        lineup = optimizer.lineupgen(lineups)
+        #lineup = optimizer.lineupgen(lineups, clean_lineups[-1][-2])
+        lineup = optimizer.lineupgen(lineups, scores)
         lineups.append(lineup)
-        #print(optimizer.printlineup(lineup))
         clean_lineups.append(optimizer.printlineup(lineup))
+        scores.append(clean_lineups[-1][-2])
+
     with open('lineups.csv', 'w', newline='') as f:
         c = csv.writer(f)
         for r in clean_lineups:
@@ -40,18 +55,16 @@ if sport == '3':
     lineups = []
     clean_lineups = []
     for i in range(150):
-        # uncomment below if using randomness, commented out for speed enhancement
-        # optimizer = MLBOpt()
-        # optimizer.create_indicators()
-        # optimizer.addRandomness()
+        optimizer.addRandomness()
         lineup = optimizer.lineupgen(lineups)
         lineups.append(lineup)
         clean_lineups.append(optimizer.printlineup(lineup))
+    print(clean_lineups)
     with open('mlblineups.csv', 'w', newline='') as f:
         c = csv.writer(f)
         for r in clean_lineups:
             c.writerow([player for player in r])
-    #optimizer.getLineupsData(clean_lineups)
+    optimizer.getLineupsData(clean_lineups)
 
 print('lineups generated in ', time.time()-starttime, "seconds")
 
