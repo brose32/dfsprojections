@@ -6,7 +6,6 @@ import re
 
 import openpyxl
 import pandas as pd
-import sys
 from pulp import *
 
 
@@ -14,25 +13,29 @@ class NBAsetup:
 
     def __init__(self):
         #change document file location here
-        #pd.read_excel('C:\\Users\\brose32\\Documents\\nbaproj01302021.xlsx', sheet_name='PROJECTIONS'
-        #             , skiprows=1).to_csv('C:\\Users\\brose32\\Documents\\nbaproj01302021.csv', index=False)
-    # cannot have excel projections open and be able to read it into CSV makes no sense but whatever
-        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbaproj04142021.xlsx', data_only=True)
+        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbaproj10212021.xlsx', data_only=True)
         sh = wb['PROJECTIONS']
-        with open('C:\\Users\\brose32\\Documents\\nbalineups.csv', 'w', newline="") as f:
+        with open('C:\\Users\\brose32\\Documents\\nbaFDprojections.csv', 'w+', newline="") as f:
             c = csv.writer(f)
             for r in sh.rows:
-                c.writerow([cell.value for cell in r])
-        self.players_df = self.loadinput('C:\\Users\\brose32\\Documents\\nbalineups.csv')
+                row_data = []
+                for cell in r:
+                    row_data.append(cell.value)
+                positions = row_data[2]
+                positions_list = positions.split("/")
+                for pos in positions_list:
+                    row_data[2] = pos
+                    c.writerow(row_data)
+        self.players_df = self.loadinput('C:\\Users\\brose32\\Documents\\nbaFDprojections.csv')
         self.num_players = len(self.players_df.index)
         self.player_teams = {}
         self.opp_teams = []
         self.num_teams = None
         self.num_opponents = None
-        self.positions = {'PG':[], 'SG':[], 'SF':[], 'PF':[], 'C':[]}
+        self.positions = {'PG': [], 'SG': [], 'SF': [], 'PF': [], 'C': []}
         self.player_names = {}
         self.started = []
-        self.randomness = 5
+        self.randomness = 10
 
     def loadinput(self, filename):
         try:
@@ -52,9 +55,9 @@ class NBAsetup:
             for key in self.positions:
                 self.positions[key].append(1 if key in pos else 0)
 
+        #teams
         for team in teams:
             self.player_teams[team] = []
-         #teams
         for player_team in self.players_df.loc[:, 'TEAM']:
             for team in teams:
                 if player_team == team:
