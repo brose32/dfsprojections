@@ -2,6 +2,12 @@ import json
 import sys
 import openpyxl
 import csv
+import statistics
+import pandas as pd
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+
 #getting positions for players / opponent from fanduel download
 
 fpath = "C:\\Users\\brose32\\Downloads\\" + sys.argv[2]
@@ -18,7 +24,11 @@ my_file = "C:\\Users\\brose32\\Documents\\" + sys.argv[1]
 wb = openpyxl.load_workbook(my_file)
 proj_sheet = wb.create_sheet("PROJECTIONS")
 proj_sheet.append(('NAME', 'SAL', 'POS', 'TEAM', 'OPP', 'DVOA', 'TPPG', 'ImpTOTAL', 'DIFF', 'tPACE', 'oPACE', 'calcPACE',
-                   'FDpts/min','MINs', 'PROJ', 'VAL', 'GOAL', 'ID'))
+                   'FDpts/min','MINs', 'PROJ', 'VAL', 'GOAL', 'ID', 'TIME'))
+cred = credentials.Certificate("C:\\Users\\brose32\\uploadprojections\\grassfairy6-1b74d-firebase-adminsdk-m3l9y-36f2ac484b.json")
+firebase_admin.initialize_app(cred)
+
+db = firestore.client()
 #for i in range(1, len(info)):
 #    proj_sheet.append((info[i]['playerName'], float(info[i]['SAL']), info[i]['POS'], info[i]['TEAM']))
 
@@ -40,11 +50,13 @@ for player in info:
     player['TEAM'] = team_abbrs[player['TEAM']]
     player['OPP'] = team_abbrs[player['OPP']]
     opponent = player['OPP']
-    position = player['POS']
-
+    position = player['POS'].split("/")
+    player['DVOA'] = []
     for row in dvoa:
-        if opponent == row[0].value and position == row[1].value:
-            player['DVOA'] = row[3].value
+        for pos in position:
+            if opponent == row[0].value and pos == row[1].value:
+                player['DVOA'].append(row[3].value)
+    player['DVOA'] = statistics.mean(player['DVOA'])
     for row in fdpts:
         if player['playerName'] == row[0].value:
             player['FDptsmin'] = row[1].value
@@ -53,27 +65,34 @@ for player in info:
     for row in lines:
         if player['TEAM'] == row[2].value:
             player['ImpTOTAL'] = row[3].value
+            player['TIP'] = row[6].value
         elif player['TEAM'] == row[4].value:
             player['ImpTOTAL'] = row[5].value
+            player['TIP'] = row[6].value
     for team in tppg:
         if player['TEAM'] == team[0].value:
             player['TPPG'] = team[1].value
-    for person in mins:
-        if player['playerName'] == person[0].value:
-            player['MINs'] = person[1].value
+    # for person in mins:
+    #     if player['playerName'] == person[0].value:
+    #         player['MINs'] = person[1].value
     for team in pace:
         if player['TEAM'] == team[0].value:
             player['tPACE'] = team[1].value
         if player['OPP'] == team[0].value:
             player['oPACE'] = team[1].value
+
+    doc = db.collection('nbaprojections').document(player['playerName']).get()
+    if doc.exists:
+        player['MINs'] = doc.to_dict()['mins']
 #for i in range(1, len(info)):
 #    proj_sheet.append((info[i]['playerName'], info[i]['SAL'], info[i]['POS'], info[i]['TEAM'], info[i]['OPP'],
 #                       info[i]['DVOA']))
 
-#print(info)
+print(info[0])
 
 #adding to sheet
 for i in range(0, len(info)):
+
     #print(info[i]['playerName'])
     diff_formula = '=(((H' + str(i + 2) + '-G' + str(i + 2) + ')/100) + 1)'
     # (fd_pts_min * minutes_projected * gameflow rating) * (game total rating * DVOA)
@@ -86,7 +105,7 @@ for i in range(0, len(info)):
     proj_sheet.append((info[i]['playerName'], float(info[i]['SAL']), info[i]['POS'], info[i]['TEAM'], info[i]['OPP'],
                        info[i]['DVOA'], info[i]['TPPG'], info[i]['ImpTOTAL'], diff_formula, info[i]['tPACE'],
                        info[i]['oPACE'], pace_formula, info[i]['FDptsmin'], info[i]['MINs'],
-                       proj_formula, value_formula, goal, info[i]['ID']))
+                       proj_formula, value_formula, goal, info[i]['ID'], info[i]['TIP']))
 #NEED TO CHANGE TO HOME AND AWAY??? currently season avg
 
 wb.save(my_file)
