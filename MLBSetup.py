@@ -2,17 +2,15 @@ import csv
 import datetime
 import json
 import random
-import re
 import sys
-from copy import deepcopy
-
 import openpyxl
 import pandas as pd
+from itertools import combinations
 
 class MLBSetup:
 
     def __init__(self):
-        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\07012021MLBFDproj.xlsx', data_only=True)
+        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\07032021MLBFDproj.xlsx', data_only=True)
         sh = wb['FD HITTERS']
         with open('C:\\Users\\brose32\\Documents\\mlbhitters.csv', 'w+', newline="") as f:
             c = csv.writer(f)
@@ -21,15 +19,12 @@ class MLBSetup:
                 for cell in r:
                     row_data.append(cell.value)
                 positions = row_data[1]
-                firstpos = row_data[1][:2]
-                row_data[1] = firstpos
-                c.writerow(row_data)
-                if positions.find("/") != -1:
-                    secondpos = positions[positions.find("/") + 1:]
-                    row_data[1] = secondpos
+                positions_list = positions.split("/")
+                for pos in positions_list:
+                    row_data[1] = pos
                     c.writerow(row_data)
         self.hitters_df = self.loadinput('C:\\Users\\brose32\\Documents\\mlbhitters.csv')
-        self.pitchers_df = pd.read_excel('C:\\Users\\brose32\\Documents\\07012021MLBFDproj.xlsx', sheet_name="FD PITCHERS")
+        self.pitchers_df = pd.read_excel('C:\\Users\\brose32\\Documents\\07032021MLBFDproj.xlsx', sheet_name="FD PITCHERS")
         self.num_hitters = len(self.hitters_df.index)
         self.num_pitchers = len(self.pitchers_df)
         self.hitter_teams = {}
@@ -40,8 +35,11 @@ class MLBSetup:
         self.num_opponents = None
         self.positions = {'C' :[], '1B' :[], '2B' :[], '3B' :[], 'SS':[], 'OF':[]}
         self.hitter_names = {}
+        self.pitcher_names = {}
+        self.stacks = []
+        self.secondary_stacks = []
         self.started = []
-        self.randomness = 5
+        self.randomness = 25
 
     def loadinput(self, filename):
         try:
@@ -59,7 +57,7 @@ class MLBSetup:
         self.num_opponents = len(opps)
 
         #position indicators
-        for pos in self.hitters_df.loc[:, 'Po']:
+        for pos in self.hitters_df.loc[:, 'Position']:
             for key in self.positions:
                 self.positions[key].append(1 if key in pos else 0)
 
@@ -82,9 +80,7 @@ class MLBSetup:
                 else:
                     self.pitcher_teams[team].append(0)
            # self.player_teams[player_team].append(1 if player_team == team else 0 for team in teams)
-        #oops TODO
-        #for player_opps in self.players_df.loc[:, 'OPP']:
-        #    self.opp_teams.append(1 if player_opps == oppo else 0 for oppo in opps)
+        #opps
         for player_opp in self.hitters_df.loc[:, "Opponent"]:
             self.pitcher_opps.append([1 if player_opp == team else 0 for team in self.pitchers_df.loc[:, "Team"]])
 
@@ -97,3 +93,40 @@ class MLBSetup:
                     self.hitter_names[player].append(1)
                 else:
                     self.hitter_names[player].append(0)
+        for player in self.pitchers_df.loc[:,'Nickname']:
+            self.pitcher_names[player] = []
+            for name in self.pitchers_df.loc[:,'Nickname']:
+                if player == name:
+                    self.pitcher_names[player].append(1)
+                else:
+                    self.pitcher_names[player].append(0)
+
+        #stacks
+        skips = 1
+        for index, player in self.hitters_df.iterrows():
+            team = player['Team']
+            lu_spot = player['ORDER']
+            teammates = [lu_spot + i if lu_spot <= 9 else lu_spot + i - 9 for i in range(1, 4 + skips)]
+            combos = list(combinations(teammates, 3))
+            player_stacks = [(lu_spot,) + combo for combo in combos]
+            for stack in player_stacks:
+                self.stacks.append([1 if (row['Team'] == team) and (row['ORDER'] in stack) else 0 for index, row in self.hitters_df.iterrows()])
+
+        for index, player in self.hitters_df.iterrows():
+            team = player['Team']
+            lu_spot = player['ORDER']
+            teammates = [lu_spot + i if lu_spot <= 9 else lu_spot + i - 9 for i in range(1, 3 + skips)]
+            combos = list(combinations(teammates, 2))
+            player_stacks = [(lu_spot,) + combo for combo in combos]
+            for stack in player_stacks:
+                self.secondary_stacks.append([1 if (row['Team'] == team) and (row['ORDER'] in stack) else 0 for index, row in self.hitters_df.iterrows()])
+
+
+    def addRandomness(self):
+        for i in range(self.num_hitters):
+            #rand = random.randint(100 - self.randomness, 100 + self.randomness)
+            rand = random.uniform(-self.randomness, self.randomness)
+            self.hitters_df.loc[i, "Rand Proj"] = self.hitters_df.loc[i, "FD PROJ"] + (self.hitters_df.loc[i, "FD PROJ"] * (rand/100))
+        for i in range(self.num_pitchers):
+            rand = random.randint(100 - self.randomness, 100 + self.randomness)
+            self.pitchers_df.loc[i, "Rand Proj"] = self.pitchers_df.loc[i, "FD PROJ"] * (rand / 100)
