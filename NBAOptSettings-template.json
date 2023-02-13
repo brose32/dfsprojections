@@ -1,0 +1,13 @@
+{
+  "max_groups" : [["Giannis Antetokounmpo", "Anthony Davis", 1],["Torrey Craig", "Josh Okogie", "Damion Lee", 2]],
+  "min_groups" : [["Giannis Antetokounmpo", "Anthony Davis", 1]],
+  "force_groups" : [["Torrey Craig", "Josh Okogie", "Damion Lee", 2]],
+  "max_exp" : {"Anthony Davis": 0.5},
+  "min_exp" : {"Ish Wainright":  0.1},
+  "locks" : ["Day'Ron Sharpe"],
+  "excludes": ["Bruce Brown"],
+  "team_min": {"DEN": 2},
+  "team_max" : {},
+  "game_min": [["MIL", "LAL", 3]],
+  "game_max": []
+}

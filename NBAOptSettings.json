@@ -1,0 +1,13 @@
+{
+  "max_groups" : [],
+  "min_groups" : [],
+  "force_groups" : [],
+  "max_exp" : {},
+  "min_exp" : {},
+  "locks" : [],
+  "excludes": [],
+  "team_min": {},
+  "team_max" : {},
+  "game_min": [],
+  "game_max": []
+}

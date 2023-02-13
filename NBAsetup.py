@@ -3,7 +3,7 @@ import datetime
 import json
 import random
 import re
-
+import numpy as np
 import openpyxl
 import pandas as pd
 from pulp import *
@@ -13,7 +13,7 @@ class NBAsetup:
 
     def __init__(self):
         #change document file location here
-        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbaproj10212021.xlsx', data_only=True)
+        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbaproj02102023.xlsx', data_only=True)
         sh = wb['PROJECTIONS']
         with open('C:\\Users\\brose32\\Documents\\nbaFDprojections.csv', 'w+', newline="") as f:
             c = csv.writer(f)
@@ -27,7 +27,9 @@ class NBAsetup:
                     row_data[2] = pos
                     c.writerow(row_data)
         self.players_df = self.loadinput('C:\\Users\\brose32\\Documents\\nbaFDprojections.csv')
+        self.players_df = self.players_df[(self.players_df["VAL"] > 4.5)].reset_index(drop=True)
         self.num_players = len(self.players_df.index)
+        print(self.num_players)
         self.player_teams = {}
         self.opp_teams = []
         self.num_teams = None
@@ -36,6 +38,7 @@ class NBAsetup:
         self.player_names = {}
         self.started = []
         self.randomness = 10
+        self.normal_randomness = 0.1
 
     def loadinput(self, filename):
         try:
@@ -67,7 +70,8 @@ class NBAsetup:
            # self.player_teams[player_team].append(1 if player_team == team else 0 for team in teams)
         #oops
         for player_opps in self.players_df.loc[:, 'OPP']:
-            self.opp_teams.append(1 if player_opps == oppo else 0 for oppo in opps)
+            #added [] below remove if doesnt work
+            self.opp_teams.append([1 if player_opps == oppo else 0 for oppo in opps])
 
         #names
 
@@ -89,6 +93,7 @@ class NBAsetup:
                 self.started.append(0)
             else:
                 self.started.append(1)
+        print(self.started[0])
     #    print(self.started)
 
     def getLockedPlayers(self, lineup):
@@ -107,12 +112,16 @@ class NBAsetup:
 
 
 
-
-
     def addRandomness(self):
-        for i in range(len(self.players_df)):
-            rand = random.randint(100 - self.randomness, 100 + self.randomness)
-            og = self.players_df.loc[i,'PROJ']
-            randproj = og * (rand/100)
-            self.players_df.at[i, 'PROJ'] = randproj
+        for i in range(self.num_players):
+            #rand = random.randint(100 - self.randomness, 100 + self.randomness)
+            rand = random.uniform(-self.randomness, self.randomness)
+            self.players_df.loc[i, "Rand PROJ"] = self.players_df.loc[i, "PROJ"] + (self.players_df.loc[i, "PROJ"] * (rand/100))
+
+    def addNormalRandomness(self):
+        rand_proj = []
+        for proj in self.players_df["PROJ"]:
+            rand_proj.append(np.random.normal(proj, proj * self.normal_randomness))
+        self.players_df["Rand PROJ"] = rand_proj
+
 
