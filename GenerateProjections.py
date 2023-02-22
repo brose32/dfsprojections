@@ -7,6 +7,7 @@ import pandas as pd
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+import pymongo
 
 #getting positions for players / opponent from fanduel download
 
@@ -24,13 +25,18 @@ my_file = "C:\\Users\\brose32\\Documents\\" + sys.argv[1]
 wb = openpyxl.load_workbook(my_file)
 proj_sheet = wb.create_sheet("PROJECTIONS")
 proj_sheet.append(('NAME', 'SAL', 'POS', 'TEAM', 'OPP', 'DVOA', 'TPPG', 'ImpTOTAL', 'DIFF', 'tPACE', 'oPACE', 'calcPACE',
-                   'FDpts/min','MINs', 'PROJ', 'VAL', 'GOAL', 'ID', 'TIME'))
+                   'FDpts/min','MINs', 'PROJ', 'VAL', 'GOAL', 'ID', 'TIME', 'FDOWN'))
 cred = credentials.Certificate("C:\\Users\\brose32\\uploadprojections\\grassfairy6-1b74d-firebase-adminsdk-m3l9y-36f2ac484b.json")
 firebase_admin.initialize_app(cred)
 
 db = firestore.client()
-#for i in range(1, len(info)):
-#    proj_sheet.append((info[i]['playerName'], float(info[i]['SAL']), info[i]['POS'], info[i]['TEAM']))
+
+uri = "mongodb+srv://dfsprojections.4ay0gcw.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority"
+client = pymongo.MongoClient(uri,
+                     tls=True,
+                     tlsCertificateKeyFile="C:\\Users\\brose32\\uploadprojections\\X509-cert-3043484743011169677.pem")
+mongo_db = client.nba
+proj_collection = mongo_db.fdProjections
 
 #getting dvoa to match with position/opponent
 # TEAM, POS, PTS, tOVP
@@ -39,13 +45,15 @@ dvoa = wb["TEAMOVP"]
 tppg = wb['TEAMPPG']
 fdpts = wb['FD PTS_MIN']
 lines = wb['VEGAS_LINES']
-mins = wb['MINUTES_PROJ']
+# mins = wb['MINUTES_PROJ']
 pace = wb['PACE']
+FD_ownership = wb['FDOWNER']
 with open('teamAbbrs.json') as f:
     team_abbrs = json.load(f)
 #looping to add all data to main sheet
 for player in info:
     player['FDptsmin'] = 0
+    player['FDOWN'] = 0
     #clean up team abbreviations
     player['TEAM'] = team_abbrs[player['TEAM']]
     player['OPP'] = team_abbrs[player['OPP']]
@@ -81,9 +89,12 @@ for player in info:
         if player['OPP'] == team[0].value:
             player['oPACE'] = team[1].value
 
-    doc = db.collection('nbaprojections').document(player['playerName']).get()
-    if doc.exists:
-        player['MINs'] = doc.to_dict()['mins']
+    doc = proj_collection.find_one({"name": player['playerName']})
+    if doc != None:
+        player['MINs'] = doc['mins']
+    for ownership in FD_ownership:
+        if player['playerName'] == ownership[0].value:
+            player['FDOWN'] = ownership[1].value
 #for i in range(1, len(info)):
 #    proj_sheet.append((info[i]['playerName'], info[i]['SAL'], info[i]['POS'], info[i]['TEAM'], info[i]['OPP'],
 #                       info[i]['DVOA']))
@@ -105,7 +116,7 @@ for i in range(0, len(info)):
     proj_sheet.append((info[i]['playerName'], float(info[i]['SAL']), info[i]['POS'], info[i]['TEAM'], info[i]['OPP'],
                        info[i]['DVOA'], info[i]['TPPG'], info[i]['ImpTOTAL'], diff_formula, info[i]['tPACE'],
                        info[i]['oPACE'], pace_formula, info[i]['FDptsmin'], info[i]['MINs'],
-                       proj_formula, value_formula, goal, info[i]['ID'], info[i]['TIP']))
+                       proj_formula, value_formula, goal, info[i]['ID'], info[i]['TIP'], info[i]['FDOWN']))
 #NEED TO CHANGE TO HOME AND AWAY??? currently season avg
 
 wb.save(my_file)
