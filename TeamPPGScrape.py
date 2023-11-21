@@ -11,8 +11,9 @@ import openpyxl
 today = datetime.datetime.today()
 formatted_date = today.strftime('%Y-%m-%d')
 
-my_url = "https://www.teamrankings.com/nba/stat/points-per-game?date=" + formatted_date
-
+#my_url = "https://www.teamrankings.com/nba/stat/points-per-game?date=" + formatted_date
+# my_url = "https://www.teamrankings.com/nba/stat/points-per-game"
+my_url = "https://www.teamrankings.com/nba/stat/points-per-game?date=2023-06-13"
 uClient = urlopen(my_url)
 page_html = uClient.read()
 uClient.close()
@@ -43,7 +44,7 @@ for team in team_list:
     team['teamName'] = abbr_team_name
     team_ppg_sheet.append((team['teamName'], team['seasonppg'], team['homeppg'], team['awayppg']))
 
-#print(team_list[0])
+#fffprint(team_list[0])
 wb.save(my_file)
 
 print('team ppg scrape complete')

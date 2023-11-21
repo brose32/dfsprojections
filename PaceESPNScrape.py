@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup as soup
 from urllib.request import urlopen
 import openpyxl
 
-my_url = "http://www.espn.com/nba/hollinger/teamstats/_/sort/paceFactor"
-
+my_url = "http://www.espn.com/nba/hollinger/teamstats/_/sort/paceFactor/year/2023"
+#my_url = "http://www.espn.com/nba/hollinger/teamstats/_/sort/paceFactor/year/2021"
 uClient = urlopen(my_url)
 page_html = uClient.read()
 uClient.close()
@@ -36,3 +36,4 @@ for team in team_pace_list:
     sum += team['PACE']
 team_pace_sheet.append(("League AVG", sum/30))
 wb.save(my_file)
+
