@@ -13,7 +13,7 @@ class DKNBAsetup:
 
     def __init__(self):
         #change document file location here
-        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbadkproj11062023.xlsx', data_only=True)
+        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbadkproj03222024.xlsx', data_only=True)
         sh = wb['DKPROJECTIONS']
         with open('C:\\Users\\brose32\\Documents\\nbaDKprojections.csv', 'w+', newline="") as f:
             c = csv.writer(f)
@@ -24,19 +24,24 @@ class DKNBAsetup:
                 positions = row_data[2]
                 positions_list = positions.split("/")
                 for pos in positions_list:
-                    if pos != 'UTIL':
-                        row_data[2] = pos
-                        c.writerow(row_data)
+                    # if pos != 'UTIL':
+                    #     row_data[2] = pos
+                    #     c.writerow(row_data)
+                    row_data[2] = pos
+                    c.writerow(row_data)
         self.players_df = self.loadinput('C:\\Users\\brose32\\Documents\\nbaDKprojections.csv')
         self.players_df = self.players_df[(self.players_df["VAL"] > 4)].reset_index(drop=True)
+        #sort by ascending time and salary
+        self.players_df['dttime'] = pd.to_datetime(self.players_df['TIME'], format='%H:%M %p')
+        self.players_df = self.players_df.sort_values(by=['dttime','DKSAL'], ascending=True).reset_index(drop=True)
         self.num_players = len(self.players_df.index)
         print(self.num_players)
         self.player_teams = {}
         self.opp_teams = []
         self.num_teams = None
         self.num_opponents = None
-        # self.positions = {'PG': [], 'SG': [], 'SF': [], 'PF': [], 'C': [], 'G': [], 'F': [], 'UTIL': []}
-        self.positions = {'PG': [], 'SG': [], 'SF': [], 'PF': [], 'C': [], 'G': [], 'F': []}
+        self.positions = {'PG': [], 'SG': [], 'SF': [], 'PF': [], 'C': [], 'G': [], 'F': [], 'UTIL': []}
+        # self.positions = {'PG': [], 'SG': [], 'SF': [], 'PF': [], 'C': [], 'G': [], 'F': []}
         self.player_names = {}
         self.started = []
         self.randomness = 10
@@ -100,7 +105,8 @@ class DKNBAsetup:
     def getLockedPlayers(self, lineup):
         current_time = datetime.datetime.now()
         locked = []
-        for player in lineup:
+        positions = ['PG', 'SG', 'SF', 'PF', 'C', 'G', 'F', 'UTIL']
+        for num, player in enumerate(lineup):
             player_row = self.players_df.loc[self.players_df['NAME'] == player]
             tip_json = json.loads(player_row.to_json())
             s = tip_json.get('TIME').values()
@@ -108,7 +114,7 @@ class DKNBAsetup:
             tipoffhr = float(re.search(r'([^:]+)', tip).group(0))
             tipoffmin = float(re.search(r'(?<=:).*', tip).group(0)[:2]) / 60
             if tipoffhr + tipoffmin + 12 < current_time.hour + (current_time.minute / 60):
-                locked.append(player)
+                locked.append((player, positions[num]))
         return locked
 
 
