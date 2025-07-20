@@ -6,6 +6,7 @@ import re
 import numpy as np
 import openpyxl
 import pandas as pd
+import math
 from pulp import *
 
 
@@ -13,9 +14,9 @@ class DKNBAsetup:
 
     def __init__(self):
         #change document file location here
-        wb = openpyxl.load_workbook('C:\\Users\\brose32\\Documents\\nbadkproj03222024.xlsx', data_only=True)
+        wb = openpyxl.load_workbook('nbadkproj04042025.xlsx', data_only=True)
         sh = wb['DKPROJECTIONS']
-        with open('C:\\Users\\brose32\\Documents\\nbaDKprojections.csv', 'w+', newline="") as f:
+        with open('nbaDKprojections.csv', 'w+', newline="") as f:
             c = csv.writer(f)
             for r in sh.rows:
                 row_data = []
@@ -24,28 +25,29 @@ class DKNBAsetup:
                 positions = row_data[2]
                 positions_list = positions.split("/")
                 for pos in positions_list:
-                    # if pos != 'UTIL':
-                    #     row_data[2] = pos
-                    #     c.writerow(row_data)
-                    row_data[2] = pos
-                    c.writerow(row_data)
-        self.players_df = self.loadinput('C:\\Users\\brose32\\Documents\\nbaDKprojections.csv')
-        self.players_df = self.players_df[(self.players_df["VAL"] > 4)].reset_index(drop=True)
+                    if pos != 'UTIL':
+                        row_data[2] = pos
+                        c.writerow(row_data)
+        self.players_df = self.loadinput('nbaDKprojections.csv')
+        self.players_df = self.players_df[(self.players_df["VAL"] > 4.5)].reset_index(drop=True)
         #sort by ascending time and salary
-        self.players_df['dttime'] = pd.to_datetime(self.players_df['TIME'], format='%H:%M %p')
+        self.players_df['dttime'] = pd.to_datetime(self.players_df['TIME'], format='%H:%M%p')
         self.players_df = self.players_df.sort_values(by=['dttime','DKSAL'], ascending=True).reset_index(drop=True)
+        self.players_df = self.players_df.round(3)
         self.num_players = len(self.players_df.index)
         print(self.num_players)
         self.player_teams = {}
         self.opp_teams = []
         self.num_teams = None
         self.num_opponents = None
-        self.positions = {'PG': [], 'SG': [], 'SF': [], 'PF': [], 'C': [], 'G': [], 'F': [], 'UTIL': []}
-        # self.positions = {'PG': [], 'SG': [], 'SF': [], 'PF': [], 'C': [], 'G': [], 'F': []}
+        #self.positions = {'PG': [], 'SG': [], 'SF': [], 'PF': [], 'C': [], 'G': [], 'F': [], 'UTIL': []}
+        self.positions = {'PG': [], 'SG': [], 'SF': [], 'PF': [], 'C': [], 'G': [], 'F': []}
         self.player_names = {}
         self.started = []
-        self.randomness = 10
-        self.normal_randomness = 0.1
+        self.randomness = None # 10
+        self.normal_randomness = 0.1 # 0.1
+        self.overlap_lineups = []
+        self.log_ownerships = []
 
     def loadinput(self, filename):
         try:
@@ -89,6 +91,10 @@ class DKNBAsetup:
                     self.player_names[player].append(1)
                 else:
                     self.player_names[player].append(0)
+        
+        #log ownership
+        self.log_ownerships = [math.log(((self.players_df.loc[i, "DKOWN"] / 100) + 1e-6)) for i in range(self.num_players)]
+
     def addTimeIndicator(self):
         current_time = datetime.datetime.now()
         for tip in self.players_df.loc[:,'TIME']:
@@ -123,11 +129,11 @@ class DKNBAsetup:
         for i in range(self.num_players):
             #rand = random.randint(100 - self.randomness, 100 + self.randomness)
             rand = random.uniform(-self.randomness, self.randomness)
-            self.players_df.loc[i, "Rand PROJ"] = self.players_df.loc[i, "PROJ"] + (self.players_df.loc[i, "PROJ"] * (rand/100))
+            self.players_df.loc[i, "Rand PROJ"] = self.players_df.loc[i, "DKPROJ"] + (self.players_df.loc[i, "PROJ"] * (rand/100))
 
     def addNormalRandomness(self):
         rand_proj = []
-        for proj in self.players_df["PROJ"]:
+        for proj in self.players_df["DKPROJ"]:
             rand_proj.append(np.random.normal(proj, proj * self.normal_randomness))
         self.players_df["Rand PROJ"] = rand_proj
 
